@@ -81,26 +81,27 @@ gulp.task('minifyhtml', ['clean'], function () {
     .on('error', gutil.log)
 })
 
-gulp.task('lint', function () {
-  gulp.src(paths.js)
+gulp.task('js-lint', function () {
+  return gulp.src(paths.js)
     .pipe(standard())
     .pipe(standard.reporter('default', {
       breakOnError: true
     }))
-    .on('error', gutil.log)
 })
 
 gulp.task('sass-watch', ['sass'], browserSync.reload)
 
-gulp.task('serve', function () {
+gulp.task('js-watch', ['js-lint'], browserSync.reload)
+
+gulp.task('serve', ['js-lint'], function () {
   browserSync.init({
     server: {
       baseDir: __dirname + '/src'
     }
   })
 
-  gulp.watch(paths.js, ['lint'])
   gulp.watch(['./src/index.html', paths.js], browserSync.reload)
+  gulp.watch([paths.js], ['js-watch'])
   gulp.watch([paths.scss], ['sass-watch'])
 })
 
