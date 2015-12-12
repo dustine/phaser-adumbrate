@@ -25,24 +25,25 @@ var paths = {
   dist: './dist/'
 }
 
-gulp.task('clean', function (cb) {
-  del([paths.dist], cb)
+gulp.task('clean', function () {
+  // del now returns a Promise that gulp can use easily
+  return del([paths.dist])
 })
 
-gulp.task('copy-assets', ['clean'], function () {
-  gulp.src(paths.assets)
+gulp.task('copy:assets', ['clean'], function () {
+  return gulp.src(paths.assets)
     .pipe(gulp.dest(paths.dist + 'assets'))
     .on('error', gutil.log)
 })
 
-gulp.task('copy-vendor', ['clean'], function () {
-  gulp.src(paths.libs)
+gulp.task('copy:vendor', ['clean'], function () {
+  return gulp.src(paths.libs)
     .pipe(gulp.dest(paths.dist))
     .on('error', gutil.log)
 })
 
-gulp.task('uglify', ['clean', 'js-lint'], function () {
-  gulp.src(paths.js)
+gulp.task('uglify', ['clean', 'lint:js'], function () {
+  return gulp.src(paths.js)
     .pipe(concat('main.min.js'))
     .pipe(gulp.dest(paths.dist))
     .pipe(uglify({outSourceMaps: false}))
@@ -50,56 +51,54 @@ gulp.task('uglify', ['clean', 'js-lint'], function () {
     .on('error', gutil.log)
 })
 
-gulp.task('sass', ['scss-lint'], function () {
+gulp.task('lint:js', function () {
+  return gulp.src(paths.js)
+  .pipe(standard())
+  .pipe(standard.reporter('default', {
+    breakOnError: true
+  }))
+})
+
+gulp.task('lint:scss', function () {
   return gulp.src(paths.sass)
-    .pipe(sass())
-    .pipe(gulp.dest('src/css/'))
-    .pipe(browserSync.stream())
-    .on('error', gutil.log)
+  .pipe(scsslint())
+  .pipe(scsslint.failReporter('E'))
 })
 
-gulp.task('scss-lint', function () {
-  return gulp.src(paths.sass)
-    .pipe(scsslint())
-    .pipe(scsslint.failReporter('E'))
+gulp.task('minify:css', ['clean', 'sass'], function () {
+  return gulp.src(paths.css)
+  .pipe(minifycss({
+    keepSpecialComments: false,
+    removeEmpty: true
+  }))
+  .pipe(rename({suffix: '.min'}))
+  .pipe(gulp.dest(paths.dist))
+  .on('error', gutil.log)
 })
 
-gulp.task('minifycss', ['clean', 'sass'], function () {
-  gulp.src(paths.css)
-    .pipe(minifycss({
-      keepSpecialComments: false,
-      removeEmpty: true
-    }))
-    .pipe(rename({suffix: '.min'}))
-    .pipe(gulp.dest(paths.dist))
-    .on('error', gutil.log)
+gulp.task('minify:html', ['clean'], function () {
+  return gulp.src('dist/index.html')
+  .pipe(minifyhtml())
+  .pipe(gulp.dest(paths.dist))
+  .on('error', gutil.log)
 })
 
-gulp.task('processhtml', ['clean'], function () {
-  gulp.src('src/index.html')
+gulp.task('process:html', ['clean'], function () {
+  return gulp.src('src/index.html')
     .pipe(processhtml({}))
     .pipe(gulp.dest(paths.dist))
     .on('error', gutil.log)
 })
 
-gulp.task('minifyhtml', ['clean'], function () {
-  gulp.src('dist/index.html')
-    .pipe(minifyhtml())
-    .pipe(gulp.dest(paths.dist))
-    .on('error', gutil.log)
+gulp.task('sass', ['lint:scss'], function () {
+  return gulp.src(paths.sass)
+  .pipe(sass())
+  .pipe(gulp.dest('src/css/'))
+  .pipe(browserSync.stream())
+  .on('error', gutil.log)
 })
 
-gulp.task('js-lint', function () {
-  return gulp.src(paths.js)
-    .pipe(standard())
-    .pipe(standard.reporter('default', {
-      breakOnError: true
-    }))
-})
-
-gulp.task('js-watch', ['js-lint'], browserSync.reload)
-
-gulp.task('serve', ['sass', 'js-lint'], function () {
+gulp.task('serve', ['sass', 'lint:js'], function () {
   browserSync.init({
     server: {
       baseDir: __dirname + '/src'
@@ -107,9 +106,19 @@ gulp.task('serve', ['sass', 'js-lint'], function () {
   })
 
   gulp.watch(['./src/index.html'], browserSync.reload)
-  gulp.watch([paths.js], ['js-watch'])
+  gulp.watch([paths.js], ['watch:js'])
   gulp.watch([paths.sass], ['sass'])
 })
 
+gulp.task('serve:build', ['build'], function () {
+  browserSync.init({
+    server: {
+      baseDir: __dirname + '/build'
+    }
+  })
+})
+
+gulp.task('watch:js', ['lint:js'], browserSync.reload)
+
 gulp.task('default', ['serve'])
-gulp.task('build', ['copy-assets', 'copy-vendor', 'uglify', 'minifycss', 'processhtml', 'minifyhtml'])
+gulp.task('build', ['copy:assets', 'copy:vendor', 'uglify', 'minify:css', 'process:html', 'minify:html'])
