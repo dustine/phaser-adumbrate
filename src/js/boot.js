@@ -14,6 +14,7 @@
       // configure game
       this.game.input.maxPointers = 1
 
+      // TODO: Fix these values for the new dimensions
       if (this.game.device.desktop) {
         this.game.scale.pageAlignHorizontally = true
       } else {
