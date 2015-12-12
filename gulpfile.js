@@ -113,7 +113,7 @@ gulp.task('serve', ['sass', 'lint:js'], function () {
 gulp.task('serve:build', ['build'], function () {
   browserSync.init({
     server: {
-      baseDir: __dirname + '/build'
+      baseDir: __dirname + '/dist'
     }
   })
 })
