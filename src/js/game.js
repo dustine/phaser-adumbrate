@@ -1,22 +1,20 @@
-(function() {
-  'use strict';
+;(function () {
+  'use strict'
 
-  function Game() {}
+  function Game () {}
 
   Game.prototype = {
     create: function () {
-      this.input.onDown.add(this.onInputDown, this);
+      this.input.onDown.add(this.onInputDown, this)
     },
 
-    update: function () {
-
-    },
+    update: function () {},
 
     onInputDown: function () {
-      this.game.state.start('menu');
+      this.game.state.start('menu')
     }
-  };
+  }
 
-  window['phaser-adumbrate'] = window['phaser-adumbrate'] || {};
-  window['phaser-adumbrate'].Game = Game;
-}());
+  window['phaser-adumbrate'] = window['phaser-adumbrate'] || {}
+  window['phaser-adumbrate'].Game = Game
+}())
