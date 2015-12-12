@@ -10,16 +10,18 @@ var uglify = require('gulp-uglify')
 
 var browserSync = require('browser-sync').create()
 var sass = require('gulp-sass')
+var scsslint = require('gulp-scss-lint')
 var standard = require('gulp-standard')
 
 var paths = {
   assets: 'src/assets/**/*',
-  scss: 'src/css/*.scss',
+  sass: 'src/sass/*.scss',
   css: 'src/css/*.css',
   libs: [
     'src/bower_components/phaser-official/build/phaser.min.js'
   ],
   js: ['src/js/**/*.js'],
+  build: './build/',
   dist: './dist/'
 }
 
@@ -39,7 +41,7 @@ gulp.task('copy-vendor', ['clean'], function () {
     .on('error', gutil.log)
 })
 
-gulp.task('uglify', ['clean', 'lint'], function () {
+gulp.task('uglify', ['clean', 'js-lint'], function () {
   gulp.src(paths.js)
     .pipe(concat('main.min.js'))
     .pipe(gulp.dest(paths.dist))
@@ -48,12 +50,18 @@ gulp.task('uglify', ['clean', 'lint'], function () {
     .on('error', gutil.log)
 })
 
-gulp.task('sass', ['clean'], function () {
-  return gulp.src(paths.scss)
+gulp.task('sass', ['scss-lint'], function () {
+  return gulp.src(paths.sass)
     .pipe(sass())
-    .pipe(gulp.dest(paths.css))
+    .pipe(gulp.dest('src/css/'))
     .pipe(browserSync.stream())
     .on('error', gutil.log)
+})
+
+gulp.task('scss-lint', function () {
+  return gulp.src(paths.sass)
+    .pipe(scsslint())
+    .pipe(scsslint.failReporter('E'))
 })
 
 gulp.task('minifycss', ['clean', 'sass'], function () {
@@ -89,20 +97,18 @@ gulp.task('js-lint', function () {
     }))
 })
 
-gulp.task('sass-watch', ['sass'], browserSync.reload)
-
 gulp.task('js-watch', ['js-lint'], browserSync.reload)
 
-gulp.task('serve', ['js-lint'], function () {
+gulp.task('serve', ['sass', 'js-lint'], function () {
   browserSync.init({
     server: {
       baseDir: __dirname + '/src'
     }
   })
 
-  gulp.watch(['./src/index.html', paths.js], browserSync.reload)
+  gulp.watch(['./src/index.html'], browserSync.reload)
   gulp.watch([paths.js], ['js-watch'])
-  gulp.watch([paths.scss], ['sass-watch'])
+  gulp.watch([paths.sass], ['sass'])
 })
 
 gulp.task('default', ['serve'])

@@ -16,6 +16,7 @@
     "gulp-processhtml": "*",
     "gulp-rename": "*",
     "gulp-sass": "*",
+    "gulp-scss-lint": "^0.3.8",
     "gulp-standard": "*",
     "gulp-uglify": "*",
     "gulp-util": "*",
