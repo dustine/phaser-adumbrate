@@ -53,16 +53,16 @@ gulp.task('uglify', ['clean', 'lint:js'], function () {
 
 gulp.task('lint:js', function () {
   return gulp.src(paths.js)
-  .pipe(standard())
-  .pipe(standard.reporter('default', {
-    breakOnError: true
-  }))
+    .pipe(standard())
+    .pipe(standard.reporter('default', {
+      breakOnError: true
+    }))
 })
 
 gulp.task('lint:scss', function () {
   return gulp.src(paths.sass)
-  .pipe(scsslint())
-  .pipe(scsslint.failReporter('E'))
+    .pipe(scsslint())
+    .pipe(scsslint.failReporter('E'))
 })
 
 gulp.task('minify:css', ['clean', 'sass'], function () {
@@ -118,7 +118,10 @@ gulp.task('serve:build', ['build'], function () {
   })
 })
 
-gulp.task('watch:js', ['lint:js'], browserSync.reload)
+gulp.task('watch:js', ['lint:js'], (cb) => {
+  browserSync.reload()
+  cb()
+})
 
 gulp.task('default', ['serve'])
 gulp.task('build', ['copy:assets', 'copy:vendor', 'uglify', 'minify:css', 'process:html', 'minify:html'])
