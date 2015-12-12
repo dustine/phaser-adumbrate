@@ -1,12 +1,11 @@
 {
   "name": "phaser-adumbrate",
-  "description": "",
-  "readme": "",
-  "repository": "",
-  "version": "0.0.0",
+  "description": "Game developed with Phaser, about the shadow cast at midnight",
+  "version": "0.0.1",
   "dependencies": {},
   "devDependencies": {
     "bower": "*",
+    "browser-sync": "^2.10.0",
     "del": "*",
     "gulp": "*",
     "gulp-concat": "*",
@@ -28,5 +27,8 @@
     "start": "node ./node_modules/gulp/bin/gulp.js",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
     "lint": "node ./node_modules/gulp/bin/gulp.js lint"
-  }
+  },
+  "main": "gulpfile.js",
+  "author": "",
+  "license": "MIT"
 }
