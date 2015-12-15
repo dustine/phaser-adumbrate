@@ -1,5 +1,11 @@
 /* globals Phaser */
 
+window.WebFontConfig = {
+  google: {
+    families: ['Raleway']
+  }
+}
+
 window.addEventListener('load', function () {
   'use strict'
 
