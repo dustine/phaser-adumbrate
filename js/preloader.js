@@ -18,12 +18,17 @@
       // this.ready = true
     },
 
+    loadTextFiles: function () {
+      // TODO: Add all the story families
+      this.load.text('story-forest', '/assets/story/forest.txt')
+    },
+
     loadFonts: function () {
       window.WebFontConfig = window.WebFontConfig || {}
-      // this will always be the last load
+      // workaround so the function calls the inside function
       let that = this
       window.WebFontConfig.active = () => {
-        // workaround so the function calls the inside function
+        // this will always be the last load
         that.onLoadComplete()
       }
       this.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
