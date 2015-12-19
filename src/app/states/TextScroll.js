@@ -10,20 +10,118 @@ export default class TextScroll extends Phaser.State {
     // TODO: Stub
     // Add the scripts to run when the scenes call for them
     let that = this;
-    this.scripts = {
-      fakeInput: () => {
-        let added = false;
-        that.textTimer.start();
-        that.text.addColor('rgb(53, 145, 252)', that.text.text.length);
-        that.textTimer.loop(500, ()=>{
-          if (added) {
-            that.text.text -= ' _';
-          } else {
-            that.text.text += ' _';
-          }
-        });
-      }
+    this.colors = {
+      choiceText: 'rgb(53, 145, 252)',
+      choiceGui: 'rgb(131, 189, 255)'
     };
+    this.scripts = {
+      addCursor: () => {
+        that.text.addColor(that.colors.choiceGui, that.text.text.length);
+        that.text.text += '\n> ';
+        that.text.addColor(that.colors.choiceText, that.text.text.length);
+      },
+      addColor: (color, location = -1) => {
+        if (location < 0) location = that.text.text.length;
+        that.text.addColor(color, location);
+      },
+      addSystemColor: (color, location = -1) => {
+        that.addColor(that.colors[color], location);
+      },
+      resetFormat: () => {
+        that.text.addColor('#ffffff', that.text.text.length);
+      },
+
+      // story scripts
+      fakeInput: () => {
+        // fakes that the game has an input system, but then gut-punches the user on it
+        let added = false;
+        // add the '> ' with the right colours
+        that.textTimer.start();
+        this.scripts.addCursor();
+        let minTextLength = that.text.text.length;
+        let waitCursor = that.textTimer.loop(500, ()=>{
+          if (added) {
+            // remove the last 2 chars
+            that.text.text = that.text.text.substring(0, that.text.text.length - 1);
+          } else {
+            that.text.text += '_';
+          }
+          added = !added;
+        });
+
+        let removeWaitCursor = () => {
+          that.textTimer.remove(waitCursor);
+          if (added) {
+            added = false;
+            that.text.text = that.text.text.substring(0, that.text.text.length - 1);
+          }
+        };
+
+        let input = '';
+        let timedOut = false;
+
+        let removeOtherFakeouts;
+        // choose the next scene depending on the user input
+        let fakeout = function () {
+          removeOtherFakeouts();
+
+          if (input === '') {
+            if (!timedOut) that.runScene('fake input: speedy blank');
+            else that.runScene('fake input: blank');
+          } else if (timedOut) {
+            that.runScene('fake input: normal');
+          } else {
+            that.runScene('fake input: speedy normal');
+          }
+        };
+
+        // count a click as a submit input, as well
+        let fakeoutClick = that.input.onTap.addOnce(fakeout, that);
+
+        // add enter support (ends it)
+        that.input.keyboard.addKey(Phaser.KeyCode.ENTER)
+          .onDown.addOnce(fakeout, that);
+
+        // now set the keyboard as an input
+        that.input.keyboard.addCallbacks(that, null, null, (key) => {
+          removeWaitCursor();
+          // add the character
+          that.text.text += key;
+
+          // add text input for further characters
+          that.input.keyboard.addCallbacks(that, null, null, (key) => {
+            input += key;
+            that.text.text += key;
+          });
+          // add backspace support
+          that.input.keyboard.addKey(Phaser.KeyCode.BACKSPACE)
+            .onDown.add(() => {
+              // we can't let it delete forever
+              if (that.text.text.length > minTextLength)
+                that.text.text = that.text.text.substring(0, that.text.text.length - 1);
+            }, that);
+        });
+
+        // finally, set a timeout of 2 seconds to cancel input anyway
+        let fakeoutTimer = that.textTimer.add(2000, ()=>{
+          timedOut = true;
+          fakeout();
+        });
+
+        // and add a way to avoid fakeout racing
+        removeOtherFakeouts = function () {
+          fakeoutClick.detach();
+          that.textTimer.remove(fakeoutTimer);
+          that.input.keyboard.onPressCallback = null;
+          that.input.keyboard.reset();
+
+          removeWaitCursor();
+          that.scripts.resetFormat();
+        };
+      }
+
+    };
+    this.breadcrumb = [];
   }
 
   preload () {
@@ -41,7 +139,7 @@ export default class TextScroll extends Phaser.State {
     this.plot = this.cache.getJSON('plot');
 
     // add the scrolling text, bounded to itself
-    this.text = this.add.text(0, 0,'',
+    this.text = this.add.text(10, 10,'',
       {
         font: '16pt Raleway',
         fill: '#ffffff',
@@ -53,8 +151,7 @@ export default class TextScroll extends Phaser.State {
       });
     // this.text.anchor.x = 0;
     // this.text.anchor.y = 1;
-    this.text.setTextBounds(10, 10, this.world.width - 20, this.world.height - 20);
-
+    this.text.setTextBounds(0, 0, this.world.width - 20, this.world.height - 20);
 
     this.textTimer = this.game.time.create(false);
     this.runScene('start of the game');
@@ -64,26 +161,74 @@ export default class TextScroll extends Phaser.State {
     // TODO: Stub
   }
 
-  // pauses the text stream, and sets the resume function as well
-  pauseText () {
-    this.textTimer.pause();
-    this.input.onDown.addOnce(()=>{
-      this.textTimer.resume();
+  enableTextSkip () {
+    this.isTextSkipped = false;
+    this.textSkipEvent = this.input.onTap.addOnce(()=> {
+      this.isTextSkipped = true;
     }, this);
   }
 
   // runs a specific scene
-  runScene (key) {
+  runScene (key, start='\n\n') {
     let scene = this.plot[key];
     let iterator = this.parse(scene);
-    this.textTimer.loop(20, () => {
-      let nextLetter = iterator.next();
-      if(!nextLetter.done) {
-        this.text.text += nextLetter.value;
-      } else {
-        this.endScene(key);
+    // enables the option of skipping
+    // TODO: make this conditional?
+    this.enableTextSkip();
+
+    let that = this;
+    // the text pause isn't the function itself
+    // but that in pause we don't schredule the next event
+    // this function schredules the resume on mouseclick
+    // with the double linebreak
+    function pauseText () {
+      that.textSkipEvent.detach();
+      that.input.onTap.addOnce(()=>{
+        that.text.text += '\n\n';
+        that.enableTextSkip();
+        addParsedText();
+      }, that);
+    }
+    let addParsedText = function () {
+      let letter;
+      // text has been skipped, do ALL at once!
+      if (that.isTextSkipped) {
+        // loop ends as soon as the text stops being skipped
+        // without consuming the whole iterator queue
+        while (that.isTextSkipped && !(letter = iterator.next()).done) {
+          // also stop the skip if you hit an \n
+          if (letter.value === '\n') {
+            that.isTextSkipped = false;
+            pauseText();
+            return;
+          }
+          that.text.text += letter.value;
+        }
       }
-    }, this);
+
+      letter = iterator.next();
+      if (letter.done) {
+        that.endScene(key);
+        return;
+      }
+
+      // linebreaks (\n) are special
+      // as they signal a pause in the scroll
+      if (letter.value === '\n') {
+        pauseText();
+        return;
+      }
+
+      // there's one more letter, add me to the future!
+      that.textTimer.add(20, () => {
+        that.text.text += letter.value;
+        addParsedText();
+      }, that);
+    };
+    addParsedText();
+
+    this.breadcrumb.push(key);
+    this.text.text += start;
     this.textTimer.start();
   }
 
@@ -92,9 +237,9 @@ export default class TextScroll extends Phaser.State {
     let insideCommand = false;
     let command = '';
     for (let letter of scene.text) {
-      if(letter === '%') {
+      if (letter === '%') {
         // % has been found, so it can be one of two cases
-        if(insideCommand){
+        if (insideCommand) {
           // we're inside a command prompt
           // and so, we're fininish it up
           insideCommand = false;
@@ -112,19 +257,7 @@ export default class TextScroll extends Phaser.State {
         // and consume letters until the whole thing is done
         command += letter;
       } else {
-        if (letter === '\n') {
-          // break lines get special treatment, even if a normal char
-          // they wait for user feedback before contuinuing on!
-          this.pauseText();
-          // if you yield anything, it'll be printed anyway :\
-          yield '';
-          // double line break
-          yield '\n';
-          // TODO: softnening the "sudden" jump
-          yield '\n';
-        } else {
-          yield letter;
-        }
+        yield letter;
       }
     }
   }
@@ -134,17 +267,17 @@ export default class TextScroll extends Phaser.State {
     let regex = /%(\D+)(\d*)%/;
     let result = regex.exec(command);
     switch (result[1]) {
-    case 'c':
-      this.text.addColor(scene.colors[Number(result[2])], this.text.text.length);
-      return '';
-    case 'e':
-      this.text.addColor('#ffffff', this.text.text.length);
-      return '';
-    case 's':
-      return '';
-    case '%':
-      return '%';
-    default:
+      case 'c':
+        this.text.addColor(scene.colors[Number(result[2])], this.text.text.length);
+        return '';
+      case 'e':
+        this.scripts.resetFormat();
+        return '';
+      case 's':
+        return '';
+      case '%':
+        return '%';
+      default:
 
     }
   }
@@ -153,18 +286,105 @@ export default class TextScroll extends Phaser.State {
   endScene (key) {
     this.textTimer.stop();
     let ending = this.plot[key].end;
+    let that = this;
+    function getValidScenes (scenes) {
+      let validScenes = [];
+      for (let scene of scenes) {
+        // if scene has a valid field
+        if (scene.valid) {
+          // run the attached script for truthness
+          scene.valid.args = scene.valid.args || [];
+          if (that.scripts[scene.valid.key].apply(that, ...scene.valid.args)) {
+            validScenes.push(scene);
+          }
+          // else just add the sucker
+        } else validScenes.push(scene);
+      }
+      return validScenes;
+    }
+    function changeChoiceState (dir) {
+      // refuse if out of bounds
+      if (that.sceneCursor + dir < 0 || that.sceneCursor + dir > that.scenes.length - 1) return;
+      that.sceneCursor += dir;
+      let scene = that.scenes[that.sceneCursor];
+
+      // display new scene
+      // remove the older option
+      that.text.text = that.text.text.substring(0, that.minLength);
+      for (let index in that.text.colors) {
+        // delete past colour info
+        if (index > that.minLength) {
+          delete that.text.colors[index];
+        }
+      }
+      // add left Gui hint
+      if (that.sceneCursor != 0) {
+        that.scripts.addColor(that.colors.choiceGui);
+        that.text.text += '« ';
+      }
+      // add the pretended color
+      if (scene.color) {
+        that.scripts.addColor(scene.color);
+      } else {
+        that.scripts.addColor(that.colors.choiceText);
+      }
+      // add the option
+      that.text.text += scene.text;
+      // add right Gui hint
+      if (that.sceneCursor != that.scenes.length - 1) {
+        that.scripts.addColor(that.colors.choiceGui);
+        that.text.text += ' »';
+      }
+    }
+    function acceptChoiceState () {
+      // remove all binded events
+      that.input.keyboard.reset();
+      that.input.onTap.remove(acceptChoiceState, that);
+
+      // fix option to be just the one chosen
+      let scene = that.scenes[that.sceneCursor];
+      that.text.text = that.text.text.substring(0, that.minLength);
+      that.scripts.addColor(that.colors.choiceGui);
+      that.text.text += scene.text;
+      that.scripts.resetFormat();
+
+      // start the next scene
+      that.runScene(scene.key);
+    }
     switch (ending.type) {
-    case 'script':
+      case 'script':
+        let script = ending.script;
+        script.args = script.args || [];
+        this.scripts[script.key].apply(this, ...script.args);
+        break;
+      case 'choice':
+        this.scenes = getValidScenes(ending.choices);
+        this.sceneCursor = 0;
+        this.scripts.addCursor();
+        this.minLength = this.text.text.length;
+        let cursorKeys = this.input.keyboard.createCursorKeys();
 
-      break;
-    case 'choice':
+        // change state: left/right
+        cursorKeys.left.onDown.add(changeChoiceState.bind(this, -1), this);
+        cursorKeys.right.onDown.add(changeChoiceState.bind(this, 1), this);
+        // accept states: Down/Enter/Space/Click
+        cursorKeys.down.onDown.add(acceptChoiceState, this);
+        this.input.keyboard.addKey(Phaser.KeyCode.ENTER).onDown.addOnce(acceptChoiceState, this);
+        this.input.keyboard.addKey(Phaser.KeyCode.SPACE).onDown.addOnce(acceptChoiceState, this);
+        this.input.onTap.addOnce(acceptChoiceState, this);
 
-      break;
-    case 'forced':
+        // start
+        changeChoiceState(0);
+        break;
+      case 'forced':
+        let validScenes = getValidScenes(ending.scenes);
 
-      break;
-    default:
-
+        // start a random scene from the valid ones
+        let key = Phaser.ArrayUtils.getRandomItem(validScenes).key;
+        this.runScene(key, '');
+        break;
+      default:
+        // TODO: error logging
     }
   }
 

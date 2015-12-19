@@ -1,26 +1,26 @@
 # Assets
 ## plot.json
-This file contains the whole plot (as in, script) of the game, in all of its possible states. So there's a lot to be told about how it's formatted, so the game doesn't just crash while loading.
+This file contains the whole plot (as in, script) of the game, in all of its possible scenes. So there's a lot to be told about how it's formatted, so the game doesn't just crash while loading.
 
 The main JSON object is a collection of JavaScript objects, with the following structure:
 
 ~~~~json
 {
     "version": "0.0.4",
-    "state 1": {},
-    "state 2": {},
+    "scene 1": {},
+    "scene 2": {},
     "and so on": {},
 }
 ~~~~
 
 - **version**: The version of the Plot.json file, correspondent to the game version, following Semver syntax. If they don't match, the game just up and crashes, I guess.
-- **state 1, state 2, ...**: The list of the several game story states which we'll be calling up and parse on the go during the game. The name of the object that contains the state is the state's *key*, which the game engine will use to call the plot segment. *Caution on having to use clear and understandable keys*, ok?
+- **scene 1, scene 2, ...**: The list of the several game story scenes which we'll be calling up and parse on the go during the game. The name of the object that contains the scene is the scene's *key*, which the game engine will use to call the plot segment. *Caution on having to use clear and understandable keys*, ok?
 
-Now, these states won't be empty objects (and probably won't be in the final version of this file). They'll, themselves, follow the following possible structures:
+Now, these scenes won't be empty objects (and probably won't be in the final version of this file). They'll, themselves, follow the following possible structures:
 
 ~~~~json
-"state 1": {
-    "key": "state 1",
+"scene 1": {
+    "key": "scene 1",
     "text": "%s0000%This is the story
     Of how my world got turned upside down
     %c0000%Yada yada%e%",
@@ -38,10 +38,10 @@ Now, these states won't be empty objects (and probably won't be in the final ver
 ~~~~
 
 Well, it's a lot of stuff here. Let's go by parts:
-- **key**: Just a repeat of the state's name, just in case
-- **text**: The main part of the story state, a huge string that'll be the text that will be printed on the game console. Now, this text isn't just pasted in, there's a bit of parsing first. I'll talk more about this later, but just take notion of the ``%c0000%`` and any other text tidbits that start and end with an percentage
+- **key**: Just a repeat of the scene's name, just in case
+- **text**: The main part of the story scene, a huge string that'll be the text that will be printed on the game console. Now, this text isn't just pasted in, there's a bit of parsing first. I'll talk more about this later, but just take notion of the ``%c0000%`` and any other text tidbits that start and end with an percentage
 - **colors** and **scripts**: Related to the parsing, described bellow. They're always arrays.
-- **end**: When a state finishes, SOMETHING must happen, if not to know where to proceed! There's a lot of state enders, and they're described [bellow](#Endings).
+- **end**: When a scene finishes, SOMETHING must happen, if not to know where to proceed! There's a lot of scene enders, and they're described [bellow](#Endings).
 
 ### Text parsing
 (Did you see what I did there?)
@@ -60,7 +60,7 @@ Command prompts follow this structure: ``%code0000%``.
 
 The **code** part identifies the kind of command prompt it is, and it's always composed of non-number and non-empty characters of any non-zero length.
 
-The string of numbers (``0`` but it can be any string of digits) after are an **identifier** for additional logic. A sometimes command prompts require some extra data, this allows the text parser to check the state for additional, and the identifier being the index on the correspondent data array. As an example,
+The string of numbers (``0`` but it can be any string of digits) after are an **identifier** for additional logic. A sometimes command prompts require some extra data, this allows the text parser to check the scene for additional, and the identifier being the index on the correspondent data array. As an example,
 
 There are **4** commands as we stand now:
 #### c
@@ -83,7 +83,7 @@ You'd get as a result "this is a <span style="color: #456789">weird </span><span
 ````json
 %e%
 ````
-**e** clears all previous text format to a default one. This is useful because the way the parser is set now, not even a state change will clear the current format. Sorry.
+**e** clears all previous text format to a default one. This is useful because the way the parser is set now, not even a scene change will clear the current format. Sorry.
 
 #### s
 ````json
@@ -124,7 +124,7 @@ Here's an example end field:
 
 This is probably one of the simpler ending objects, but it shows the required structure for them:
 - A **type** field, to say what information and behaviour this ending has;
-- And that respective extra information, in this case just another field called *state*.
+- And that respective extra information, in this case just another field called *scene*.
 
 So to understand endings, we need to go through each of the kinds of them, one by one. What the text parser does is that exact same thing. Anyway, the types:
 
@@ -138,7 +138,7 @@ So to understand endings, we need to go through each of the kinds of them, one b
     }
 }
 ````
-Instead of jumping to another story state, the Text Parser closes itself and then runs the script described by the [script object above](#s). The **pause** field is ignored as, for all effects, the text is always paused as it, um, ran out.
+Instead of jumping to another story scene, the Text Parser closes itself and then runs the script described by the [script object above](#s). The **pause** field is ignored as, for all effects, the text is always paused as it, um, ran out.
 
 #### choice
 ````json
@@ -158,8 +158,8 @@ Instead of jumping to another story state, the Text Parser closes itself and the
     }]
 }
 ````
-Probably the most common ending kind, this one gives the user a list of options to choose from. And as such, the logic is to have a field called **choices** that contains a list of all these choices, represented as state objects. Now, these state objects follow the following syntax:
-- **key** is the key for the story state that'll follow from picking this option;
+Probably the most common ending kind, this one gives the user a list of options to choose from. And as such, the logic is to have a field called **choices** that contains a list of all these choices, represented as scene objects. Now, these scene objects follow the following syntax:
+- **key** is the key for the story scene that'll follow from picking this option;
 - **text** will be the text present in the option button;
 - **color** *[optional]* will colour the text on the button using the code;
 - **valid** *[optional]* is an script object. If the function returns a falsify value, the option is hidden from the player. Because the text is finished by now, the **pause** field is ignored.
@@ -168,7 +168,7 @@ Probably the most common ending kind, this one gives the user a list of options 
 ````json
 "end": {
     "type": "forced",
-    "states": [{
+    "scenes": [{
         "key": "get dust",
         },{
         "key": "summon fairy",
@@ -179,4 +179,4 @@ Probably the most common ending kind, this one gives the user a list of options 
     }]
 }
 ````
-Silently picks a story state change from the list of [state objects](#choice). If there's more than one valid option, the choice is random between these valid options. Because the list of states is never present to the user, the **text** and **color** fields are ignored.
+Silently picks a story scene change from the list of [scene objects](#choice). If there's more than one valid option, the choice is random between these valid options. Because the list of scenes is never present to the user, the **text** and **color** fields are ignored.
