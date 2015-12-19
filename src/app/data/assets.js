@@ -33,7 +33,28 @@ export default {
     {
       key: 'phaser',
       type: 'image'
+    },
+
+    {
+      key: 'plot',
+      type: 'json'
+    },
+
+    {
+      key: 'raleway',
+      type: 'script'
+    },
+
+    {
+      key: 'droidsans',
+      type: 'script'
+    },
+
+    {
+      key: 'droidserif',
+      type: 'script'
     }
+
 
     // Example: adding a background music.
     // {

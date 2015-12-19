@@ -42,19 +42,17 @@
     <title>Adumbrate</title>
     <meta name="description" content="Text aventure under the shadow of a dark night sky">
 
-    <!-- Google Fonts API -->
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Raleway">
-
     <style>
       html { box-sizing: border-box; }
       * { margin: 0; padding: 0; }
       *, *:before, *:after { box-sizing: inherit; }
       html, body { background: #000; overflow: hidden; -ms-touch-action: none; touch-action: none; }
-      canvas { touch-action-delay: none; -ms-touch-action: none; touch-action: none; -ms-interpolation-mode: nearest-neighbor; image-rendering: -webkit-optimize-contrast; image-rendering: -moz-crisp-edges; image-rendering: pixelated; }
+      canvas { touch-action-delay: none; -ms-touch-action: none; touch-action: none; -ms-interpolation-mode: nearest-neighbor; image-rendering: -webkit-optimize-contrast; image-rendering: -moz-crisp-edges; image-rendering: pixelated; border: 1px solid white; }
     </style>
   </head>
 
   <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.18/webfont.js"></script>
     <!-- build:js game.min.js -->
     <script src="phaser.js"></script>
     <script src="game.js"></script>
