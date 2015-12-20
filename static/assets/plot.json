@@ -2,13 +2,23 @@
   "version": "0.0.1",
   "!!model": {
     "text": "",
-    "colors": ["pain/danger","red","inventory/attention","yellow","movement","rgb(87, 210, 74)","memory","rgb(53, 145, 252)"],
+    "colors": ["pain/danger","red","inventory/attention","yellow","movement","rgb(87, 210, 74)","memory","rgb(53, 145, 252)","fast travel/time passing","magenta"],
     "scripts": [{
       "key": "",
       "args": [""]
       }],
     "end": {
       "type": ""
+    }
+  },
+  "boot": {
+    "text": "",
+    "end": {
+      "type": "script",
+      "script": [{
+        "key": "pickStart",
+        "args": [""]
+        }]
     }
   },
   "start of the game": {
@@ -19,6 +29,49 @@
       "script": {
         "key": "fakeInput"
       }
+    }
+  },
+  "resume of the game": {
+    "text": "It is very dark. Cold and dark. You find yourself on an unfamiliar place...\nWait a second. No, you do %c0%recognize%e% this place. You can barely see but this is clearly the forest clearing. THE forest clearing.\nWas... was everything that happened so far a dream? An hallucination? Or did you just pass out and... somehow returned here? You do seem to have everything with you...\nUgh, no time to think, let's get this on the road.",
+    "colors": ["rgb(53, 145, 252)"],
+    "end": {
+      "type": "forced",
+      "scenes": [{"key": "forest clearing"}]
+    }
+  },
+  "resume of the game 2": {
+    "text": "It is very dark. Cold and dark. You find yourself on an unfamiliar place...\nUgh, %c0%not again%e%, you're back in that forest clearing. Did you pass out again? Anyway, stuff's in order, let's go.",
+    "colors": ["rgb(53, 145, 252)"],
+    "end": {
+      "type": "forced",
+      "scenes": [{"key": "forest clearing"}]
+    }
+  },
+  "resume of the game 3+": {
+    "text": "...\nForest clearing, stuff to do.",
+    "colors": ["rgb(53, 145, 252)"],
+    "end": {
+      "type": "forced",
+      "scenes": [{"key": "forest clearing"}]
+    }
+  },
+  "clueless restart of the game": {
+    "text": "It is very dark. Cold and dark. You find yourself on a %c0%now familiar%e% place.\nMore, you %c0%remember%e% the sunrise. You recall all the days and nights since then, as hazely as your memory allows. You can't expect to remember what you had for breakfast 3 days ago, right?\nAnyway, you're back here. Why? Was something left undone? Wait, did YOU think that? Seems those aliens thoughts are back too, and with a revenge. Something that you were destined to do is still undone, and has to be done post-haste!\nMaybe.\nSeems it'll be yet again one more long night.",
+    "colors": ["rgb(53, 145, 252)"],
+    "end": {
+      "type": "forced",
+      "scenes": [{"key": "forest clearing"}]
+    }
+  },
+  "knowful restart of the game": {
+    "text": "It is very dark. Cold and dark. You find yourself on a %c0%now familiar%e% place.\nMore, you %c0%remember%e% the sunrise. You recall all the days and nights since then, as hazely as your memory allows. You can't expect to remember what you had for breakfast 3 days ago, right?\nAnyway, you're back here. It really does seem the %c1%artifacts%e% hold the key to this mystery, seeing that you still have the %s0% on you. How many do remain? Will this be over once you get them all?\nWell, why don't we find that out?",
+    "colors": ["rgb(53, 145, 252)", "yellow"],
+    "scripts": [{
+      "key": "printArtifactNr"
+      }],
+    "end": {
+      "type": "forced",
+      "scenes": [{"key": "forest clearing"}]
     }
   },
   "fake input: blank": {

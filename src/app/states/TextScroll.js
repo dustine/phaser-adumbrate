@@ -157,6 +157,10 @@ export default class TextScroll extends Phaser.State {
           removeWaitCursor();
           that.scripts.resetFormat();
         };
+      },
+      printArtifactNr: () => {
+        // TODO
+        return '0';
       }
 
     };
