@@ -14,21 +14,60 @@ export default class TextScroll extends Phaser.State {
       choiceText: 'rgb(53, 145, 252)',
       choiceGui: 'rgb(131, 189, 255)'
     };
+    this.flags = {
+
+    };
     this.scripts = {
+      addBreadcrumb: () => {
+        // adds previous scene into the breadcrump
+        // a recallable stack-like structure so scene backtracking is possible
+        this.breadcrumb.push(this.totalBreadcrumb);
+      },
       addCursor: () => {
+        // adds the input cursor with pretty colours
         that.text.addColor(that.colors.choiceGui, that.text.text.length);
         that.text.text += '\n> ';
         that.text.addColor(that.colors.choiceText, that.text.text.length);
       },
       addColor: (color, location = -1) => {
+        // adds the specified color right where the user asked
         if (location < 0) location = that.text.text.length;
         that.text.addColor(color, location);
       },
       addSystemColor: (color, location = -1) => {
+        // adds the specified color, from the this.colors, as requested
         that.addColor(that.colors[color], location);
       },
+      getMemory: (key) => {
+        // returns the stored memory (local storage file)
+        if (localStorage[key] === undefined) {
+          // if there's no value stored, you kinda want it to be considered a falsy value
+          return undefined;
+        }
+        return JSON.parse(localStorage[key]);
+      },
+      isMemory: (key, value) => {
+        // tests if the stored matches matches the given value
+        if (localStorage[key] === undefined) {
+          // if there's no value stored, you kinda want it to be considered a falsy value
+          return value == null;
+        }
+        let storedValue = JSON.parse(localStorage[key]);
+        return storedValue === value;
+      },
       resetFormat: () => {
+        // removes any runaway formattation from previours
+        // due to engine limitations, this limits itself just to text colour
         that.text.addColor('#ffffff', that.text.text.length);
+      },
+      setFlag: (key, value) => {
+        // sets an internal flag to this value
+        // TODO: the whole memory thing ._.
+        this.flags[key] = value;
+      },
+      setMemory: (key, value) => {
+        // sets a MEMORY (local storage key) to this value
+        localStorage[key] = JSON.stringify(value);
       },
 
       // story scripts
@@ -121,6 +160,7 @@ export default class TextScroll extends Phaser.State {
       }
 
     };
+    this.totalBreadcrumb = [];
     this.breadcrumb = [];
   }
 
@@ -227,7 +267,7 @@ export default class TextScroll extends Phaser.State {
     };
     addParsedText();
 
-    this.breadcrumb.push(key);
+    this.totalBreadcrumb.push(key);
     this.text.text += start;
     this.textTimer.start();
   }
@@ -274,6 +314,19 @@ export default class TextScroll extends Phaser.State {
         this.scripts.resetFormat();
         return '';
       case 's':
+        let args = command.args || [];
+        this.scripts[command.key](...args);
+        return '';
+      case 'b':
+        this.scripts.addBreadcrumb(scene);
+        return '';
+      case 'f':
+        let flag = scene.flags[Number(result[2])];
+        this.scripts.setFlag(flag.key, flag.value);
+        return '';
+      case 'm':
+        let memory = scene.memories[Number(result[2])];
+        this.scripts.setMemory(memory.key, memory.value);
         return '';
       case '%':
         return '%';
@@ -286,6 +339,7 @@ export default class TextScroll extends Phaser.State {
   endScene (key) {
     this.textTimer.stop();
     let ending = this.plot[key].end;
+
     let that = this;
     function getValidScenes (scenes) {
       let validScenes = [];
@@ -293,8 +347,8 @@ export default class TextScroll extends Phaser.State {
         // if scene has a valid field
         if (scene.valid) {
           // run the attached script for truthness
-          scene.valid.args = scene.valid.args || [];
-          if (that.scripts[scene.valid.key].apply(that, ...scene.valid.args)) {
+          let args = scene.valid.args || [];
+          if (that.scripts[scene.valid.key](...args)) {
             validScenes.push(scene);
           }
           // else just add the sucker
@@ -351,11 +405,12 @@ export default class TextScroll extends Phaser.State {
       // start the next scene
       that.runScene(scene.key);
     }
+
     switch (ending.type) {
       case 'script':
         let script = ending.script;
         script.args = script.args || [];
-        this.scripts[script.key].apply(this, ...script.args);
+        this.scripts[script.key](...script.args);
         break;
       case 'choice':
         this.scenes = getValidScenes(ending.choices);
@@ -382,6 +437,9 @@ export default class TextScroll extends Phaser.State {
         // start a random scene from the valid ones
         let key = Phaser.ArrayUtils.getRandomItem(validScenes).key;
         this.runScene(key, '');
+        break;
+      case 'breadcrumb':
+        this.runScene(this.breadcrumb.pop().key);
         break;
       default:
         // TODO: error logging

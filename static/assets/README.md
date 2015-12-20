@@ -105,6 +105,26 @@ So let's use an example to better explain how script objects work, alright?
 - **args** *[optional]* is an array of the arguments fed to the function when called dynamically
 - **pause** *[optional, defaults to ***false***]* is a Boolean value that tells the Text Parser whenever it should suspend text flow. If so, the script has to eventually tell the text parser it can continue later on, or the game risks never resuming (whoops). Defaults to ``false``.
 
+#### b
+````json
+%b%
+````
+**b** stands for breadcrumb, and it's used in conjunction with the [breadcrumb](#breadcrumb) ending. This is basically a shortcut for the ``addBreadcrumb()`` script.
+What this does is add the **previous** scene into a breadcrumb data structure so that when a breadcrumb ending occurs the game skips back to that scene. Again, it registers the ***previous*** scene. This is helpful so you don't need to hack all scenes that could branch into the need of a breadcrumb, just put it on the scene you know you'll need to 'revert' back from.
+Like a breadcrumb, the structure works in a stack fashion, so if several ``%b%`` are called, they are resumed starting by the most recent and jumping back.
+
+#### f
+**f** stands for flag, and like ``%b%``, it's a stand for a script, in this case ``setFlag(key, value)``, **key** being the flag's name and **value** the desired value for it. Because of the extra data, you'll need to fill it in the ***flags*** *data array*, using the following structure:
+````json
+"flags": [{
+    "key": "hasEatenPie",
+    "value": true
+    }]
+````
+
+#### m
+**m** stands for memory, a special kind of flag that is kept between game sessions. Think of it as Undertale's ini values. No Fun value here though! Uses the same data structure as ``%f%`` but under the ***memories*** *data array* name; and if you want it the old way, the respective script is ``setMemory(key, value)``.
+
 #### %
 ````json
 %%%
@@ -180,3 +200,11 @@ Probably the most common ending kind, this one gives the user a list of options 
 }
 ````
 Silently picks a story scene change from the list of [scene objects](#choice). If there's more than one valid option, the choice is random between these valid options. Because the list of scenes is never present to the user, the **text** and **color** fields are ignored.
+
+#### breadcrumb
+````json
+"end": {
+    "type": "breadcrumb"
+}
+````
+Used for scene pathways that can return dynamically depending where they are in the game. In other words
