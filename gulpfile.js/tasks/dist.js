@@ -55,7 +55,6 @@ module.exports = function (gulp, $, config) {
   var ghPages = require('gulp-gh-pages');
 
   gulp.task('deploy', ['dist'], function() {
-    $.util.log('HELP');
     return gulp.src(dirs.dist)
       .pipe($.ghPages());
   });
