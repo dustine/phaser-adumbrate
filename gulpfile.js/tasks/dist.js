@@ -53,11 +53,8 @@ module.exports = function (gulp, $, config) {
   });
 
   gulp.task('deploy', ['dist'], function () {
-    $.util.log(dirs.dist)
     return gulp.src(dirs.dist + '/**/*')
-      .pipe($.ghPages({
-        force: false
-      }));
+      .pipe($.ghPages());
   });
 
 };
