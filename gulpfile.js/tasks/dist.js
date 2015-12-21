@@ -9,6 +9,7 @@
 module.exports = function (gulp, $, config) {
 
   var del = require('del');
+  var runSequence = require('run-sequence');
 
   var dirs  = config.dirs;
   var files = config.files;
@@ -43,10 +44,20 @@ module.exports = function (gulp, $, config) {
 
   // The main distribution task.
   gulp.task('dist', [ 'dist:clean' ], function (done) {
-    gulp.start([
-      'dist:assets',
-      'dist:scripts'
-    ], done);
+    runSequence(['dist:assets', 'dist:scripts'],
+      done);
+    // return gulp.start([
+    //   'dist:assets',
+    //   'dist:scripts'
+    // ], done);
+  });
+
+  var ghPages = require('gulp-gh-pages');
+
+  gulp.task('deploy', ['dist'], function() {
+    $.util.log('HELP');
+    return gulp.src(dirs.dist)
+      .pipe($.ghPages());
   });
 
 };
