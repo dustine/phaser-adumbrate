@@ -52,11 +52,12 @@ module.exports = function (gulp, $, config) {
     // ], done);
   });
 
-  var ghPages = require('gulp-gh-pages');
-
-  gulp.task('deploy', ['dist'], function() {
-    return gulp.src(dirs.dist)
-      .pipe($.ghPages());
+  gulp.task('deploy', ['dist'], function () {
+    $.util.log(dirs.dist)
+    return gulp.src(dirs.dist + '/**/*')
+      .pipe($.ghPages({
+        force: false
+      }));
   });
 
 };
